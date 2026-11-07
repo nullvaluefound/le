@@ -44,8 +44,15 @@ try {
     $child.WaitForExit()
     if ($child.ExitCode -ne 0 -or $result -notmatch '\d+\.\d+') { throw "Fresh-shell le command failed: $errorText" }
     Write-Output $result
-    winget uninstall --id $identifier -e --silent --accept-source-agreements --disable-interactivity
+    # Local manifests are not indexed by a public source, so their package ID
+    # cannot be resolved there. Use the portable registration's product code,
+    # just as WinGet's own registered UninstallString does.
+    $registrations = @(Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' |
+        Where-Object { $_.WinGetPackageIdentifier -eq $identifier })
+    if ($registrations.Count -ne 1) { throw 'Expected one registered local portable package.' }
+    winget uninstall --product-code $registrations[0].PSChildName --silent --accept-source-agreements --disable-interactivity
     if ($LASTEXITCODE -ne 0) { throw 'WinGet uninstallation failed.' }
+    if (Test-Path -LiteralPath $registrations[0].PSPath) { throw 'WinGet left the package registered after removal.' }
     Write-Output 'WinGet portable install, fresh-shell command, and uninstallation passed.'
 } finally {
     if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id -ErrorAction SilentlyContinue }
