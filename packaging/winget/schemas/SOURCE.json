@@ -1,0 +1,9 @@
+{
+  "repository": "microsoft/winget-cli",
+  "revision": "afc9a471496c4cd80ac363df269362f84ea5a457",
+  "sha256": {
+    "manifest.version.1.28.0.json": "5c9fa37ebe70dd410114157d31e4d9e84451b2bb8890e1c4345b4c690406ee1a",
+    "manifest.installer.1.28.0.json": "2caa4cd3a630c284b5ef750522e2e5861f751f376180b89cd29873eb30504ef4",
+    "manifest.defaultLocale.1.28.0.json": "734c069c82470e3436d274fb381bfbe03e22f8fbfae2d2dd50df7dc055a3e061"
+  }
+}

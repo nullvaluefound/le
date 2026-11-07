@@ -1,0 +1,16 @@
+{
+  "application": "le",
+  "description": "Directory listing with icons, permissions, ownership, timestamps, recursion, depth limits, and JSON export.",
+  "github_owner": "nullvaluefound",
+  "github_repository": "le",
+  "publisher": "nullvaluefound",
+  "winget_identifier": "nullvaluefound.Le",
+  "license": "MIT",
+  "license_file": "LICENSE",
+  "maintainer_name": "nullvaluefound",
+  "maintainer_email": "jpmak98@gmail.com",
+  "apt_base_url": "https://nullvaluefound.github.io/le",
+  "apt_signing_fingerprint": null,
+  "apt_suite": "stable",
+  "architectures": ["amd64"]
+}

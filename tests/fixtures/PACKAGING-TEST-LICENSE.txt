@@ -1,0 +1,3 @@
+Synthetic packaging test fixture only. This is not the application's license
+and grants no distribution rights to the application. Production publication
+must use the real license configured by the project owner.

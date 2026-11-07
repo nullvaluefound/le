@@ -1,0 +1,54 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: le-release-publication
+  cancel-in-progress: false
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ github.ref_name }}
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      # Publishing code is from the trusted default branch, not the release tag.
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt -r packaging/requirements-build.txt
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends dpkg-dev
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: le-*
+          path: release
+          merge-multiple: true
+      - name: Validate metadata and publish complete draft atomically
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          export SOURCE_DATE_EPOCH=$(git show -s --format=%ct "$RELEASE_TAG")
+          python packaging/publish_release.py --tag "$RELEASE_TAG" --artifacts release
+      # GITHUB_TOKEN-created release events do not trigger other workflows.
+      # Explicit dispatch starts metadata generation only after publication.
+      - name: Start trusted metadata publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh workflow run winget-manifest.yml -f tag="$RELEASE_TAG"
+          gh workflow run publish-apt.yml -f tag="$RELEASE_TAG"

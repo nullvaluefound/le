@@ -1,0 +1,100 @@
+name: Native builds and installer tests
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: ''
+permissions:
+  contents: read
+jobs:
+  matrix:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - id: targets
+        env:
+          LE_ENABLE_ARM64: ${{ vars.LE_ENABLE_ARM64 }}
+        run: echo "matrix=$(python packaging/ci_matrix.py)" >> "$GITHUB_OUTPUT"
+  build:
+    needs: matrix
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -r requirements.txt -r packaging/requirements-build.txt
+      - run: python packaging/security_check.py
+      - id: version
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: python packaging/ci_prepare.py
+      - name: Generate and check standalone installers
+        run: |
+          python packaging/generate_manual.py
+          git diff --exit-code -- install.ps1 uninstall.ps1 install.bat uninstall.bat install.sh uninstall.sh
+      - name: Build and smoke-test native binary
+        env:
+          LE_VERSION: ${{ steps.version.outputs.version }}
+          SOURCE_DATE_EPOCH: ${{ steps.version.outputs.epoch }}
+        run: python packaging/release.py build --version "$LE_VERSION" --arch "${{ matrix.arch }}" --epoch "$SOURCE_DATE_EPOCH"
+      - name: Native old-version and failed-upgrade fixtures
+        run: python packaging/build_test_fixtures.py
+      - name: Isolated install/uninstall tests
+        run: python -m unittest discover -s tests -v
+      - name: Packaging test metadata (never publication metadata)
+        run: |
+          mkdir -p build
+          python packaging/make_fixture_config.py build/fixture-config.json
+      - name: WinGet schema validation
+        if: matrix.platform == 'windows'
+        env:
+          LE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python packaging/release.py winget --config build/fixture-config.json --version "$LE_VERSION" --artifacts release --output build/winget
+          python packaging/validate_manifests.py build/winget
+      - name: Native WinGet client validation when installed
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          if (Get-Command winget -ErrorAction SilentlyContinue) {
+            python packaging/validate_manifests.py build/winget --winget-client
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            ./packaging/test_winget_install.ps1 -ManifestRoot build/winget -ArtifactDirectory release
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } else {
+            Write-Output 'WinGet client unavailable on this runner; pinned official schema validation passed. Run the documented Windows Sandbox test before submission.'
+          }
+      - name: Linux packaging tools (ephemeral runner only)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends reprepro gnupg dpkg-dev lintian gcc
+          bash -n install.sh uninstall.sh packaging/setup-apt.sh
+      - name: Debian/APT signing, upgrades and clean-container tests
+        if: matrix.platform == 'linux'
+        env:
+          LE_VERSION: ${{ steps.version.outputs.version }}
+          LE_ARCH: ${{ matrix.arch }}
+        run: python packaging/test_apt.py --binary "release/le-linux-$LE_ARCH" --version "$LE_VERSION" --containers
+      - name: Hash tested build artifacts
+        run: python packaging/release.py checksums release
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: le-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release/*
+          if-no-files-found: error
+          retention-days: 7
