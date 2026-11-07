@@ -68,7 +68,7 @@ Suites: stable
 Components: main
 Signed-By: /tmp/le-keyrings/le.gpg
 ' > /tmp/le-sources/le.sources
-APT_OPTIONS=(-o Dir::Etc::sourcelist=/dev/null -o Dir::Etc::sourceparts=/tmp/le-sources)
+APT_OPTIONS=(-o Dir::Etc::sourcelist=/dev/null -o Dir::Etc::sourceparts=/tmp/le-sources -o APT::Update::Error-Mode=any)
 apt-get "${APT_OPTIONS[@]}" update
 apt-get "${APT_OPTIONS[@]}" install -y le-cli
 le --version | grep -q '1.0.0'
@@ -83,11 +83,13 @@ test ! -e /usr/bin/le
 cp -a /artifacts/repo-v2 /tmp/le-unsigned
 rm /tmp/le-unsigned/dists/stable/InRelease /tmp/le-unsigned/dists/stable/Release.gpg
 sed -i 's,file:/tmp/le-repository,file:/tmp/le-unsigned,' /tmp/le-sources/le.sources
-if apt-get "${APT_OPTIONS[@]}" update; then echo 'ERROR: unsigned repository accepted' >&2; exit 1; fi
+mkdir -p /tmp/le-rejected-lists/partial
+# Negative trust checks use empty lists, never an earlier trusted cached index.
+if apt-get "${APT_OPTIONS[@]}" -o Dir::State::lists=/tmp/le-rejected-lists update; then echo 'ERROR: unsigned repository accepted' >&2; exit 1; fi
 sed -i 's,file:/tmp/le-unsigned,file:/tmp/le-repository,' /tmp/le-sources/le.sources
 printf invalid-key > /tmp/le-keyrings/wrong.gpg
 sed -i 's,le.gpg,wrong.gpg,' /tmp/le-sources/le.sources
-if apt-get "${APT_OPTIONS[@]}" update; then echo 'ERROR: invalid signing key accepted' >&2; exit 1; fi
+if apt-get "${APT_OPTIONS[@]}" -o Dir::State::lists=/tmp/le-rejected-lists update; then echo 'ERROR: invalid signing key accepted' >&2; exit 1; fi
 sed -i 's,wrong.gpg,le.gpg,' /tmp/le-sources/le.sources
 printf '#!/bin/sh\necho unrelated\n' > /usr/bin/le
 chmod 755 /usr/bin/le
