@@ -36,6 +36,19 @@ def sha256(path):
     return digest.hexdigest()
 
 
+def default_epoch():
+    configured = os.environ.get('SOURCE_DATE_EPOCH')
+    if configured is not None:
+        if not configured.isdigit():
+            raise ValueError('SOURCE_DATE_EPOCH must be a non-negative integer')
+        return int(configured)
+    try:
+        return int(subprocess.check_output(['git', '-C', str(ROOT), 'show', '-s', '--format=%ct', 'HEAD'],
+                                            stderr=subprocess.DEVNULL, text=True).strip())
+    except (OSError, ValueError, subprocess.CalledProcessError):
+        return int(time.time())
+
+
 def version(value):
     if not SEMVER.fullmatch(value):
         raise ValueError('Use a semantic version such as v1.0.0; no moving tags or path characters.')
@@ -305,7 +318,7 @@ exit 0
         changelog = (f'le-cli ({deb_version(args.version)}) stable; urgency=medium\n\n'
                      '  * Package the existing le application without changing its CLI.\n\n'
                      f" -- {data['maintainer_name']} <{data['maintainer_email']}>  {date.strftime('%a, %d %b %Y %H:%M:%S +0000')}\n")
-        (docs / 'changelog.Debian.gz').write_bytes(gzip.compress(changelog.encode(), mtime=args.epoch))
+        (docs / 'changelog.gz').write_bytes(gzip.compress(changelog.encode(), mtime=args.epoch))
         man = root / 'usr/share/man/man1'
         man.mkdir(parents=True)
         manual = ('.TH LE 1 "' + date.strftime('%Y-%m-%d') + '" "' + version(args.version) + '"\n'
@@ -399,14 +412,14 @@ def main():
     build_parser.add_argument('--version', required=True)
     build_parser.add_argument('--arch', choices=['amd64', 'arm64'])
     build_parser.add_argument('--output', default=str(ROOT / 'release'))
-    build_parser.add_argument('--epoch', type=int, default=0)
+    build_parser.add_argument('--epoch', type=int, default=default_epoch())
     build_parser.set_defaults(function=build)
     checksum_parser = commands.add_parser('checksums')
     checksum_parser.add_argument('directory')
     checksum_parser.set_defaults(function=checksums)
     bundle_parser = commands.add_parser('bundle')
     bundle_parser.add_argument('--output', default=str(ROOT / 'release'))
-    bundle_parser.add_argument('--epoch', type=int, default=0)
+    bundle_parser.add_argument('--epoch', type=int, default=default_epoch())
     bundle_parser.set_defaults(function=bundle)
     for name, function in [('winget', winget), ('deb', deb), ('apt', apt_repository), ('validate-public', validate_public)]:
         command = commands.add_parser(name)
@@ -419,7 +432,7 @@ def main():
         elif name == 'deb':
             command.add_argument('--binary', required=True)
             command.add_argument('--output', required=True)
-            command.add_argument('--epoch', type=int, default=0)
+            command.add_argument('--epoch', type=int, default=default_epoch())
         elif name == 'apt':
             command.add_argument('--packages', required=True)
             command.add_argument('--output', required=True)

@@ -23,8 +23,10 @@ def command(*args, **kwargs):
 
 
 def build_deb(binary, version, configuration, output):
+    metadata = json.loads(Path(binary).with_name(Path(binary).name + '.build.json').read_text(encoding='utf-8'))
+    epoch = metadata.get('source_date_epoch') or release.default_epoch()
     command(sys.executable, ROOT / 'packaging/release.py', 'deb', '--binary', binary,
-            '--version', version, '--config', configuration, '--output', output)
+            '--version', version, '--config', configuration, '--output', output, '--epoch', epoch)
     return next(Path(output).glob('*.deb'))
 
 
