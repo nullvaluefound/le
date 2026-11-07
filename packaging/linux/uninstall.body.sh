@@ -10,7 +10,7 @@ le_new_work
 if [ -f "$LE_STATE_DIR/path-files" ]; then
     while IFS=$'\t' read -r LE_CREATED LE_RC; do
         [ -n "$LE_RC" ] || continue
-        case "$LE_RC" in "$LE_HOME_DIR/.profile"|"$LE_HOME_DIR/.bashrc"|"$LE_HOME_DIR/.zshrc") ;; *) le_fail 'Ownership record names an unexpected profile; refusing removal.';; esac
+        case "$LE_RC" in "$LE_HOME_DIR/.profile"|"$LE_HOME_DIR/.bashrc"|"$LE_HOME_DIR/.zshrc"|"$LE_HOME_DIR/.bash_profile"|"$LE_HOME_DIR/.bash_login") ;; *) le_fail 'Ownership record names an unexpected profile; refusing removal.';; esac
         [ ! -L "$LE_RC" ] || le_fail 'Profile changed into a symlink; preserving it.'
         if [ -f "$LE_RC" ]; then
             if ! grep -Fq -- "$LE_MARK_START" "$LE_RC" && ! grep -Fq -- "$LE_MARK_END" "$LE_RC"; then continue; fi

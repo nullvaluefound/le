@@ -218,6 +218,24 @@ class ManualInstallerTests(unittest.TestCase):
         self.invoke('uninstall')
         self.assertEqual(self.original_profile + b'\n# later user setting\n', profile.read_bytes())
 
+    @unittest.skipIf(os.name == 'nt', 'Bash login profile test')
+    def test_existing_bash_login_profile_precedence_and_restoration(self):
+        for name in ('.bash_login', '.bash_profile'):
+            with self.subTest(profile=name):
+                profile = self.test_home / name
+                profile.write_bytes(self.original_profile)
+                self.invoke('install')
+                shell = subprocess.run(['bash', '--noprofile', '--norc', '-c',
+                                        '. "$1"; command -v le', 'test', str(profile)],
+                                       capture_output=True, text=True)
+                self.assertEqual(0, shell.returncode)
+                self.assertEqual(str(self.target), shell.stdout.strip())
+                self.invoke('uninstall')
+                self.assertEqual(self.original_profile, profile.read_bytes())
+                profile.unlink()
+        self.assertFalse((self.test_home / '.bash_profile').exists())
+        self.assertFalse((self.test_home / '.bash_login').exists())
+
 
 if __name__ == '__main__':
     unittest.main()

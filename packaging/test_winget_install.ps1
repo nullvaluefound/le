@@ -44,7 +44,7 @@ try {
     $child.WaitForExit()
     if ($child.ExitCode -ne 0 -or $result -notmatch '\d+\.\d+') { throw "Fresh-shell le command failed: $errorText" }
     Write-Output $result
-    winget uninstall --id $identifier -e --silent --disable-interactivity
+    winget uninstall --id $identifier -e --silent --accept-source-agreements --disable-interactivity
     if ($LASTEXITCODE -ne 0) { throw 'WinGet uninstallation failed.' }
     Write-Output 'WinGet portable install, fresh-shell command, and uninstallation passed.'
 } finally {

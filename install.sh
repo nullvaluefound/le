@@ -155,12 +155,21 @@ LE_REPORTED_VERSION=$("$LE_WORK/le" --version) || le_fail 'The candidate executa
 case "$LE_REPORTED_VERSION" in *$'\n'*|*$'\r'*) le_fail 'The executable reported a multiline version.';; esac
 LE_NEEDS_PATH=0
 LE_PROFILE_COUNT=0
+LE_RC_NAMES=(.profile .bashrc .zshrc)
+# Bash login shells prefer these existing files over .profile. Do not create
+# either file: that would change the user's startup-file precedence.
+for LE_LOGIN_NAME in .bash_profile .bash_login; do
+    if [ -e "$LE_HOME_DIR/$LE_LOGIN_NAME" ] || [ -L "$LE_HOME_DIR/$LE_LOGIN_NAME" ]; then
+        LE_RC_NAMES+=("$LE_LOGIN_NAME")
+        break
+    fi
+done
 if [ "$LE_PREVIOUS" -eq 0 ]; then
     le_make_block
     : > "$LE_WORK/new-path-files"
     case ":$PATH:" in *:"$LE_BIN_DIR":*) ;; *) [ "$LE_SYSTEM" -eq 1 ] || LE_NEEDS_PATH=1;; esac
     if [ "$LE_NEEDS_PATH" -eq 1 ]; then
-        for LE_RC_NAME in .profile .bashrc .zshrc; do
+        for LE_RC_NAME in "${LE_RC_NAMES[@]}"; do
             LE_RC="$LE_HOME_DIR/$LE_RC_NAME"
             [ ! -L "$LE_RC" ] || le_fail "Refusing to edit a symlinked profile: $LE_RC"
             if [ -f "$LE_RC" ] && grep -Fq -- "$LE_MARK_START" "$LE_RC"; then
@@ -235,7 +244,7 @@ if [ "$LE_PREVIOUS" -eq 0 ]; then
     if [ "$LE_NEEDS_PATH" -eq 1 ]; then
         mkdir -p -- "$LE_HOME_DIR"
         LE_PROFILE_COUNT=0
-        for LE_RC_NAME in .profile .bashrc .zshrc; do
+        for LE_RC_NAME in "${LE_RC_NAMES[@]}"; do
             LE_RC="$LE_HOME_DIR/$LE_RC_NAME"
             LE_MODE=644
             if [ -f "$LE_WORK/profile-$LE_PROFILE_COUNT.old" ]; then LE_MODE=$(stat -c %a "$LE_WORK/profile-$LE_PROFILE_COUNT.old"); fi

@@ -84,8 +84,10 @@ be upgraded or removed through WinGet.
 
 Linux defaults to `~/.local/bin/le`, with state at
 `${XDG_STATE_HOME:-$HOME/.local/state}/le`. It adds exact marked blocks to
-`.profile`, `.bashrc`, and `.zshrc` only if necessary. Existing bytes and later
-user edits outside the block are preserved on removal. Changed installer-owned
+`.profile`, `.bashrc`, and `.zshrc` only if necessary.
+For Bash login shells it also updates the existing `.bash_profile` or
+`.bash_login` selected by Bash's precedence, without creating either file.
+Existing bytes and later user edits outside the block are preserved on removal. Changed installer-owned
 blocks are preserved with an actionable error. Symlinked profiles are not edited.
 An optional `--system` mode targets `/usr/bin/le` and `/var/lib/le-manual`; it
 requires an explicitly elevated shell and never invokes sudo itself.
