@@ -12,9 +12,28 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
     if ($LASTEXITCODE -eq 0) { $installedVersion = [version]$versionText }
 }
 if ($installedVersion -lt $requiredVersion) {
-    Install-Module -Name Microsoft.WinGet.Client -RequiredVersion $requiredVersion.ToString() -Scope CurrentUser -Repository PSGallery -Force -AllowClobber
-    Import-Module Microsoft.WinGet.Client -RequiredVersion $requiredVersion.ToString()
-    Repair-WinGetPackageManager -AllUsers -Force -Version $requiredVersion.ToString()
+    # Registering the runner's old provisioned bundle fails on Server 2025.
+    # Install the official signed bundle directly with its matching dependencies.
+    $downloadRoot = Join-Path $env:RUNNER_TEMP ('le-winget-bootstrap-' + [Guid]::NewGuid().ToString('N'))
+    [IO.Directory]::CreateDirectory($downloadRoot) | Out-Null
+    $assets = @{
+        'DesktopAppInstaller_Dependencies.zip' = 'ba875afe9d190f61218985ac0292a99d1db710bf93e13c68944ca9d89f0d82d1'
+        'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle' = '65dea9c01ce08ee7b763366b27c0e651f97db857c11ca9b9c301826c10092f2e'
+    }
+    foreach ($name in $assets.Keys) {
+        $destination = Join-Path $downloadRoot $name
+        Invoke-WebRequest -UseBasicParsing -Uri ("https://github.com/microsoft/winget-cli/releases/download/v$requiredVersion/$name") -OutFile $destination
+        if ((Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant() -ne $assets[$name]) {
+            throw "Official WinGet bootstrap checksum mismatch: $name"
+        }
+    }
+    Expand-Archive -LiteralPath (Join-Path $downloadRoot 'DesktopAppInstaller_Dependencies.zip') -DestinationPath (Join-Path $downloadRoot 'dependencies')
+    $architecture = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+    $dependencies = @(Get-ChildItem -LiteralPath (Join-Path $downloadRoot "dependencies/$architecture") -Filter '*.appx' | ForEach-Object { $_.FullName })
+    Add-AppxPackage -Path (Join-Path $downloadRoot 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle') -DependencyPath $dependencies -ForceApplicationShutdown
+    $windowsApps = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
+    $env:PATH = $windowsApps + ';' + $env:PATH
+    Add-Content -LiteralPath $env:GITHUB_PATH -Value $windowsApps -Encoding utf8
 }
 winget --version
 if ($LASTEXITCODE -ne 0) { throw 'WinGet bootstrap did not provide a working client.' }
