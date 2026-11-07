@@ -26,7 +26,7 @@ le --version
 le --help | grep -q -- --output-json
 mkdir -p /tmp/le-public-smoke/child
 printf fixture > /tmp/le-public-smoke/child/file.txt
-le /tmp/le-public-smoke -rn 1 --output-json /tmp/le-public-tree.json
+le /tmp/le-public-smoke -r --output-json /tmp/le-public-tree.json
 grep -q 'file.txt' /tmp/le-public-tree.json
 grep -q '/tmp/le-public-smoke/child' /tmp/le-public-tree.json
 apt-get purge -y le-cli
