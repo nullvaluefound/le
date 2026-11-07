@@ -51,6 +51,12 @@ jobs:
           LE_VERSION: ${{ steps.version.outputs.version }}
           SOURCE_DATE_EPOCH: ${{ steps.version.outputs.epoch }}
         run: python packaging/release.py build --version "$LE_VERSION" --arch "${{ matrix.arch }}" --epoch "$SOURCE_DATE_EPOCH"
+      - name: Linux packaging tools (ephemeral runner only)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends reprepro gnupg dpkg-dev lintian gcc
+          bash -n install.sh uninstall.sh packaging/setup-apt.sh
       - name: Native old-version and failed-upgrade fixtures
         run: python packaging/build_test_fixtures.py
       - name: Isolated install/uninstall tests
@@ -78,12 +84,6 @@ jobs:
           } else {
             Write-Output 'WinGet client unavailable on this runner; pinned official schema validation passed. Run the documented Windows Sandbox test before submission.'
           }
-      - name: Linux packaging tools (ephemeral runner only)
-        if: matrix.platform == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends reprepro gnupg dpkg-dev lintian gcc
-          bash -n install.sh uninstall.sh packaging/setup-apt.sh
       - name: Debian/APT signing, upgrades and clean-container tests
         if: matrix.platform == 'linux'
         env:
