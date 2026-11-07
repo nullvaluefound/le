@@ -19,6 +19,20 @@ Repository: <https://github.com/nullvaluefound/le>.
 Publisher: `nullvaluefound`. WinGet ID: `nullvaluefound.Le`.
 Debian maintainer: `nullvaluefound <jpmak98@gmail.com>`. License: MIT.
 
+Release `v1.0.0` is public. The production APT repository is deployed and
+[verified with clean Ubuntu 22.04 and Debian 12 clients](https://github.com/nullvaluefound/le/actions/runs/42421504848),
+including HTTPS signature verification, package installation, CLI/JSON output,
+purge, and separate repository removal. A second publication verified restoring
+the prior signed state and refreshing its metadata. Automatic APT publication
+and weekly expiry refresh are enabled with `LE_APT_ENABLED=true`.
+WinGet manifests are validated and staged; no community submission is claimed.
+
+The production secrets are restricted to the `apt-release` environment on
+`main`. Pages deployment is also restricted to `main`; release publication uses
+version tags. Main rejects force pushes and deletion, and version tags reject
+rewriting and deletion. These rules do not require a pull-request review for
+ordinary owner-authorized changes.
+
 `packaging/distribution.json` is the configuration authority. A missing signing
 fingerprint or protected signing secret deliberately blocks APT publication.
 Native GitHub Releases and WinGet staging can proceed independently.
@@ -180,7 +194,7 @@ sudo apt purge le-cli
 
 ## Signed APT repository
 
-Production URL: `https://nullvaluefound.github.io/le` after Pages activation.
+Production URL: `https://nullvaluefound.github.io/le` (active).
 `reprepro` maintains `pool/main/l/le-cli` and `dists/stable/main/binary-ARCH`.
 Only supplied/tested architectures are indexed. Prior payloads are retained in
 pool, while the latest version is indexed for upgrades. Every snapshot is signed

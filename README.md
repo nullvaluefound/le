@@ -92,8 +92,10 @@ sudo apt remove le-cli
 
 Configure the signed APT repository first, using its independently verified
 signing fingerprint as described in [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md).
-The intended repository URL is `https://nullvaluefound.github.io/le`;
-do not assume it is live until the Pages publication workflow succeeds.
+The signed repository is live at `https://nullvaluefound.github.io/le`.
+Its signing fingerprint is `9ECD6CC083C1EE9EF8EDD26240167FE47E9E1C26`.
+Production installation and removal are verified on Ubuntu 22.04 and Debian 12.
+WinGet manifests are staged; community submission and indexing remain pending.
 
 Debian already has an unrelated `le` text editor. `le-cli` refuses to displace
 that package or an unrelated `/usr/bin/le`. They cannot coexist at that path.
