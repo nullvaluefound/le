@@ -20,7 +20,8 @@ Publisher: `nullvaluefound`. WinGet ID: `nullvaluefound.Le`.
 Debian maintainer: `nullvaluefound <jpmak98@gmail.com>`. License: MIT.
 
 `packaging/distribution.json` is the configuration authority. A missing signing
-fingerprint or protected signing secret deliberately blocks public publication.
+fingerprint or protected signing secret deliberately blocks APT publication.
+Native GitHub Releases and WinGet staging can proceed independently.
 Synthetic `LicenseRef-Packaging-Test-Only` metadata and ephemeral keys are used
 only for tests and are explicitly rejected by production publication validation.
 
@@ -270,6 +271,8 @@ python packaging/release.py checksums release
 # Linux with reprepro, gnupg, dpkg-dev, gcc, lintian and Docker available:
 python packaging/test_apt.py --binary release/le-linux-amd64 --version 1.0.0 --containers
 python packaging/release.py validate-public --version 1.0.0
+# After configuring APT signing metadata:
+python packaging/release.py validate-public --version 1.0.0 --require-apt
 git tag v1.0.0
 git push origin v1.0.0
 ```
@@ -278,7 +281,9 @@ The release workflow builds and tests native binaries with read-only permissions
 A protected `release` publishing job uses trusted default-branch code, verifies
 tag ancestry/source hashes/version/header/hash, creates real Debian packages,
 assembles manual installers, and uploads a draft release completely before
-making it public. Only then does it dispatch WinGet staging and APT publishing.
+making it public. Only then does it dispatch WinGet staging and, when
+`LE_APT_ENABLED=true`, APT publishing. The first APT publication is a manual
+dispatch after signing setup; enable automatic updates after that succeeds.
 Actions are pinned to exact official commits. Production signing credentials
 are not passed to build jobs, pull requests, or tagged application code.
 
@@ -306,7 +311,7 @@ release artifact; Debian packages also retain those notices under `/usr/share/do
 ## Troubleshooting
 
 **No release found:** builds/workflows are not themselves public releases. Finish
-metadata/signing configuration and publish a version tag successfully first.
+release metadata configuration and publish a version tag successfully first.
 
 **Wrong architecture or glibc:** use the artifact whose header/build metadata
 matches your OS/architecture and glibc baseline. Do not rename an incompatible

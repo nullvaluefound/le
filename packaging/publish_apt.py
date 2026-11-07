@@ -48,7 +48,7 @@ def main():
     parser.add_argument('--output', required=True)
     args = parser.parse_args()
     data = release.config(require=('github_owner', 'github_repository', 'apt_base_url', 'apt_signing_fingerprint'))
-    release.validate_public(argparse.Namespace(config=None, version=release.version(args.tag)))
+    release.validate_public(argparse.Namespace(config=None, version=release.version(args.tag), require_apt=True))
     repository = data['github_owner'] + '/' + data['github_repository']
     if os.environ.get('GITHUB_REPOSITORY') != repository:
         raise ValueError('Repository ownership mismatch')

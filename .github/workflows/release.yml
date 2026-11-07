@@ -45,10 +45,14 @@ jobs:
           python packaging/publish_release.py --tag "$RELEASE_TAG" --artifacts release
       # GITHUB_TOKEN-created release events do not trigger other workflows.
       # Explicit dispatch starts metadata generation only after publication.
-      - name: Start trusted metadata publication
+      - name: Stage WinGet metadata for manual submission
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          gh workflow run winget-manifest.yml -f tag="$RELEASE_TAG"
-          gh workflow run publish-apt.yml -f tag="$RELEASE_TAG"
+        run: gh workflow run winget-manifest.yml -f tag="$RELEASE_TAG"
+      - name: Publish APT metadata after signing setup is active
+        if: vars.LE_APT_ENABLED == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh workflow run publish-apt.yml -f tag="$RELEASE_TAG"

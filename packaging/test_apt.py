@@ -51,6 +51,11 @@ apt-get install -y /artifacts/actual/*.deb
 le --version
 le --help | grep -q -- --output-json
 apt-get remove -y le-cli
+dpkg --purge le-cli
+test ! -e /usr/bin/le
+# A local-only package has no APT index entry after complete removal.
+# Exercise APT purge while installed as a separate installation cycle.
+apt-get install -y /artifacts/actual/*.deb
 apt-get purge -y le-cli
 test ! -e /usr/bin/le
 mkdir -p /tmp/le-keyrings /tmp/le-sources

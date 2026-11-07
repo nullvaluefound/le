@@ -1,4 +1,5 @@
 import hashlib
+import argparse
 import importlib.util
 import json
 import os
@@ -35,6 +36,18 @@ class MetadataTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(ROOT / 'main.py'), '--version'], capture_output=True)
         self.assertEqual(0, result.returncode)
         self.assertRegex(result.stdout, rb'\d+\.\d+')
+
+    def test_native_publication_does_not_require_apt_credentials(self):
+        data = release.config()
+        data['apt_signing_fingerprint'] = None
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'config.json'
+            path.write_text(json.dumps(data), encoding='utf-8')
+            args = argparse.Namespace(config=path, version='1.0.0', require_apt=False)
+            release.validate_public(args)
+            args.require_apt = True
+            with self.assertRaisesRegex(ValueError, 'apt_signing_fingerprint'):
+                release.validate_public(args)
 
     def test_build_records_match_source_binary_headers_and_licenses(self):
         records = list((ROOT / 'release').glob('*.build.json'))

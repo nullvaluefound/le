@@ -395,14 +395,16 @@ def apt_repository(args):
 
 
 def validate_public(args):
-    data = config(args.config, ('github_owner', 'github_repository', 'publisher', 'winget_identifier',
-                                'license', 'license_file', 'maintainer_name', 'maintainer_email',
-                                'apt_base_url', 'apt_signing_fingerprint'))
+    required = ('github_owner', 'github_repository', 'publisher', 'winget_identifier',
+                'license', 'license_file', 'maintainer_name', 'maintainer_email')
+    if getattr(args, 'require_apt', False):
+        required += ('apt_base_url', 'apt_signing_fingerprint')
+    data = config(args.config, required)
     if data.get('test_fixture'):
         raise ValueError('Synthetic test metadata must never be published as project metadata.')
     license_text(data)
     version(args.version)
-    print('Release configuration is complete; publication still requires protected credentials and repository settings.')
+    print('Release metadata is complete. APT publication separately requires its protected signing key and repository settings.')
 
 
 def main():
@@ -426,6 +428,8 @@ def main():
         command.add_argument('--config')
         if name != 'apt':
             command.add_argument('--version', required=True)
+        if name == 'validate-public':
+            command.add_argument('--require-apt', action='store_true', help='Also require production APT signing metadata')
         if name == 'winget':
             command.add_argument('--artifacts', required=True)
             command.add_argument('--output', required=True)
