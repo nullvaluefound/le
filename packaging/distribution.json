@@ -10,7 +10,9 @@
   "maintainer_name": "nullvaluefound",
   "maintainer_email": "jpmak98@gmail.com",
   "apt_base_url": "https://nullvaluefound.github.io/le",
-  "apt_signing_fingerprint": null,
+  "apt_signing_fingerprint": "9ECD6CC083C1EE9EF8EDD26240167FE47E9E1C26",
   "apt_suite": "stable",
-  "architectures": ["amd64"]
+  "architectures": [
+    "amd64"
+  ]
 }

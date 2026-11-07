@@ -222,11 +222,15 @@ and downgrades fail before deployment.
 ### Client trust bootstrap
 
 Verify the signing fingerprint through an independent trusted channel first.
-Use its actual full value in place of `VERIFIED_FINGERPRINT` below; this is a
-required configuration placeholder, not a real project key:
+The project's Ed25519 archive key is
+`9ECD6CC083C1EE9EF8EDD26240167FE47E9E1C26`, expiring on 2029-11-06 UTC.
+Its public key is tracked under `packaging/apt/`; private recovery material is
+kept outside the repository. The local recovery bundle uses Windows DPAPI and
+requires the original Windows account and computer; it is not by itself a
+portable off-site backup.
 
 ```bash
-sudo bash packaging/setup-apt.sh --fingerprint VERIFIED_FINGERPRINT
+sudo bash packaging/setup-apt.sh --fingerprint 9ECD6CC083C1EE9EF8EDD26240167FE47E9E1C26
 sudo apt update
 sudo apt install le-cli
 ```
