@@ -32,8 +32,11 @@ if ($installedVersion -lt $requiredVersion) {
     $dependencies = @(Get-ChildItem -LiteralPath (Join-Path $downloadRoot "dependencies/$architecture") -Filter '*.appx' | ForEach-Object { $_.FullName })
     Add-AppxPackage -Path (Join-Path $downloadRoot 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle') -DependencyPath $dependencies -ForceApplicationShutdown
     $windowsApps = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
-    $env:PATH = $windowsApps + ';' + $env:PATH
-    Add-Content -LiteralPath $env:GITHUB_PATH -Value $windowsApps -Encoding utf8
+    if (($env:PATH -split ';') -notcontains $windowsApps) {
+        # Preserve setup-python's priority over the Microsoft Store Python aliases.
+        $env:PATH += ';' + $windowsApps
+        Add-Content -LiteralPath $env:GITHUB_ENV -Value ('PATH=' + $env:PATH) -Encoding utf8
+    }
 }
 winget --version
 if ($LASTEXITCODE -ne 0) { throw 'WinGet bootstrap did not provide a working client.' }
