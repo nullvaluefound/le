@@ -22,6 +22,11 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r packaging/requirements-build.txt
+      - name: Prepare current WinGet client (ephemeral runner only)
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./packaging/prepare_winget_ci.ps1
       - name: Download immutable public Windows artifacts
         env:
           GH_TOKEN: ${{ github.token }}
@@ -36,7 +41,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python packaging/validate_manifests.py build/winget-submission
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (Get-Command winget -ErrorAction SilentlyContinue) { python packaging/validate_manifests.py build/winget-submission --winget-client; exit $LASTEXITCODE }
+          python packaging/validate_manifests.py build/winget-submission --winget-client
+          exit $LASTEXITCODE
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: winget-pkgs-submission

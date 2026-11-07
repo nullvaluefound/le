@@ -72,18 +72,20 @@ jobs:
         run: |
           python packaging/release.py winget --config build/fixture-config.json --version "$LE_VERSION" --artifacts release --output build/winget
           python packaging/validate_manifests.py build/winget
-      - name: Native WinGet client validation when installed
+      - name: Prepare current WinGet client (ephemeral runner only)
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./packaging/prepare_winget_ci.ps1
+      - name: Native WinGet client validation and installation
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
-          if (Get-Command winget -ErrorAction SilentlyContinue) {
-            python packaging/validate_manifests.py build/winget --winget-client
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            ./packaging/test_winget_install.ps1 -ManifestRoot build/winget -ArtifactDirectory release
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          } else {
-            Write-Output 'WinGet client unavailable on this runner; pinned official schema validation passed. Run the documented Windows Sandbox test before submission.'
-          }
+          python packaging/validate_manifests.py build/winget --winget-client
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./packaging/test_winget_install.ps1 -ManifestRoot build/winget -ArtifactDirectory release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Debian/APT signing, upgrades and clean-container tests
         if: matrix.platform == 'linux'
         env:

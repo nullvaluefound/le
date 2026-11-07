@@ -135,7 +135,7 @@ def main():
                 source = base / ('fixture-' + package_version + '.c')
                 source.write_text('#include <stdio.h>\nint main(void){ puts("le packaging fixture ' + package_version + '"); return 0; }\n', encoding='utf-8')
                 executable = base / ('fixture-' + package_version)
-                command('cc', '-O2', '-o', executable, source)
+                command('cc', '-O2', '-s', '-o', executable, source)
                 metadata = {'version': package_version, 'sha256': release.sha256(executable), 'minimum_glibc': platform.libc_ver()[1]}
                 executable.with_name(executable.name + '.build.json').write_text(json.dumps(metadata), encoding='utf-8')
                 output = base / ('deb-' + package_version)
