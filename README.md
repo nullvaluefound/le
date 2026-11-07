@@ -125,6 +125,7 @@ Python and Colorama; users do not need to install them separately.
 python -m pip install -r requirements.txt -r packaging/requirements-build.txt
 python packaging/generate_manual.py
 python packaging/release.py build --version 1.0.0 --output release
+python packaging/build_test_fixtures.py
 python -m unittest discover -s tests -v
 python packaging/release.py checksums release
 ```
