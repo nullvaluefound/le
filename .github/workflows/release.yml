@@ -41,7 +41,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          export SOURCE_DATE_EPOCH=$(git show -s --format=%ct "$RELEASE_TAG")
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct "$RELEASE_TAG")
           python packaging/publish_release.py --tag "$RELEASE_TAG" --artifacts release
       # GITHUB_TOKEN-created release events do not trigger other workflows.
       # Explicit dispatch starts metadata generation only after publication.

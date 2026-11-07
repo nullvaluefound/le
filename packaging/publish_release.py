@@ -25,6 +25,7 @@ if os.environ.get('GITHUB_REPOSITORY') != repository:
     raise SystemExit('Release workflow repository does not match configured project ownership.')
 tag_commit = subprocess.check_output(['git', 'rev-list', '-n', '1', args.tag], text=True).strip()
 subprocess.run(['git', 'merge-base', '--is-ancestor', tag_commit, 'HEAD'], check=True)
+source_epoch = int(subprocess.check_output(['git', 'show', '-s', '--format=%ct', tag_commit], text=True).strip())
 source = subprocess.check_output(['git', 'show', args.tag + ':main.py'])
 import hashlib
 source_hash = hashlib.sha256(source).hexdigest()
@@ -51,7 +52,7 @@ if not {('windows', 'amd64'), ('linux', 'amd64')}.issubset(seen):
 for binary in directory.glob('le-linux-*'):
     if not re.fullmatch(r'le-linux-(amd64|arm64)', binary.name):
         continue
-    release.deb(argparse.Namespace(config=None, binary=str(binary), version=version, output=str(directory), epoch=int(os.environ['SOURCE_DATE_EPOCH'])))
+    release.deb(argparse.Namespace(config=None, binary=str(binary), version=version, output=str(directory), epoch=source_epoch))
 manual_files = ['install.ps1', 'uninstall.ps1', 'install.bat', 'uninstall.bat', 'install.sh', 'uninstall.sh']
 for name in manual_files:
     shutil.copyfile(root / name, directory / name)
