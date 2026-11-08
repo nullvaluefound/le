@@ -1,5 +1,7 @@
 # le
 
+![Three-panel rage comic: le me, le files, and le nice after running le -r](docs/assets/le-comic.png)
+
 `le` lists directories with file icons, ownership, permissions, modification
 times, sizes, recursive depth limits, and JSON export. The Python application
 is unchanged by the distribution tooling.
