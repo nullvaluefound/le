@@ -1,5 +1,10 @@
 [CmdletBinding()]
-param([Parameter(Mandatory=$true)][string]$ManifestRoot, [Parameter(Mandatory=$true)][string]$ArtifactDirectory)
+param(
+    [Parameter(Mandatory=$true)][string]$ManifestRoot,
+    [Parameter(Mandatory=$true)][string]$ArtifactDirectory,
+    [string]$PackageIdentifier = 'LeDistributionTests.Le',
+    [switch]$UsePublishedDownloads
+)
 $ErrorActionPreference = 'Stop'
 if ($env:CI -ne 'true' -or -not $env:RUNNER_TEMP) { throw 'Run this test only in a disposable CI Windows runner, never the developer installation.' }
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw 'WinGet client not installed.' }
@@ -8,22 +13,26 @@ if ($manifestFiles.Count -ne 3) { throw 'Expected one complete manifest set.' }
 $testRoot = Join-Path $env:RUNNER_TEMP ('le-winget-test-' + [Guid]::NewGuid().ToString('N'))
 $localManifests = Join-Path $testRoot 'manifests'
 [IO.Directory]::CreateDirectory($localManifests) | Out-Null
-$identifier = 'LeDistributionTests.Le'
+$identifier = $PackageIdentifier
 $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
 $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop()
 $server = $null
 try {
     foreach ($manifest in $manifestFiles) {
         $text = [IO.File]::ReadAllText($manifest.FullName)
-        $text = [regex]::Replace($text, 'InstallerUrl: https://[^\r\n]+/([^/\r\n]+)', ('InstallerUrl: http://127.0.0.1:' + $port + '/$1'))
+        if (-not $UsePublishedDownloads) {
+            $text = [regex]::Replace($text, 'InstallerUrl: https://[^\r\n]+/([^/\r\n]+)', ('InstallerUrl: http://127.0.0.1:' + $port + '/$1'))
+        }
         [IO.File]::WriteAllText((Join-Path $localManifests $manifest.Name), $text, [Text.UTF8Encoding]::new($false))
     }
-    $server = Start-Process -FilePath (Get-Command python).Source -ArgumentList @('-m','http.server',"$port",'--bind','127.0.0.1','--directory',('"' + [IO.Path]::GetFullPath($ArtifactDirectory) + '"')) -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $testRoot 'http.out') -RedirectStandardError (Join-Path $testRoot 'http.err')
-    $ready = $false
-    for ($attempt = 0; $attempt -lt 30; $attempt++) {
-        try { Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$port/" | Out-Null; $ready = $true; break } catch { Start-Sleep -Milliseconds 200 }
+    if (-not $UsePublishedDownloads) {
+        $server = Start-Process -FilePath (Get-Command python).Source -ArgumentList @('-m','http.server',"$port",'--bind','127.0.0.1','--directory',('"' + [IO.Path]::GetFullPath($ArtifactDirectory) + '"')) -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $testRoot 'http.out') -RedirectStandardError (Join-Path $testRoot 'http.err')
+        $ready = $false
+        for ($attempt = 0; $attempt -lt 30; $attempt++) {
+            try { Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$port/" | Out-Null; $ready = $true; break } catch { Start-Sleep -Milliseconds 200 }
+        }
+        if (-not $ready) { throw 'Local fixture download server did not start.' }
     }
-    if (-not $ready) { throw 'Local fixture download server did not start.' }
     winget settings --enable LocalManifestFiles
     if ($LASTEXITCODE -ne 0) { throw 'Could not enable local manifests in the disposable runner.' }
     winget validate --manifest $localManifests --disable-interactivity

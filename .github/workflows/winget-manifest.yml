@@ -43,6 +43,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python packaging/validate_manifests.py build/winget-submission --winget-client
           exit $LASTEXITCODE
+      - name: Install and remove the exact published WinGet package (ephemeral runner only)
+        shell: pwsh
+        run: ./packaging/test_winget_install.ps1 -ManifestRoot build/winget-submission -ArtifactDirectory release -PackageIdentifier nullvaluefound.Le -UsePublishedDownloads
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: winget-pkgs-submission
