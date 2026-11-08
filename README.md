@@ -14,6 +14,15 @@ The path defaults to the current directory. `-n` limits recursion only when
 `-r` is present. JSON uses an outer array, absolute directory keys, and
 filenames as string values; nested directories retain their child relationships.
 
+## Demo
+
+![Terminal demo: list a directory, recurse with a depth limit, and export JSON](docs/assets/le-demo.gif)
+
+[Watch or download the 27-second MP4](docs/assets/le-demo.mp4) · [Replay the terminal recording](docs/assets/le-demo.cast)
+
+Recorded with the real executable using sample files. Shows listing, depth-limited
+recursion, JSON export, and a preview of the generated JSON.
+
 ## Installation
 
 Download artifacts and `SHA256SUMS` from the
