@@ -53,7 +53,7 @@ for binary in directory.glob('le-linux-*'):
     if not re.fullmatch(r'le-linux-(amd64|arm64)', binary.name):
         continue
     release.deb(argparse.Namespace(config=None, binary=str(binary), version=version, output=str(directory), epoch=source_epoch))
-manual_files = ['install.ps1', 'uninstall.ps1', 'install.bat', 'uninstall.bat', 'install.sh', 'uninstall.sh']
+manual_files = ['install.ps1', 'uninstall.ps1', 'install.bat', 'uninstall.bat', 'install.sh', 'uninstall.sh', 'install-apt.sh']
 for name in manual_files:
     shutil.copyfile(root / name, directory / name)
 shutil.copyfile(root / 'packaging/setup-apt.sh', directory / 'setup-apt.sh')

@@ -168,7 +168,7 @@ def checksums(args):
 def bundle(args):
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
-    sources = {name: ROOT / name for name in ['install.ps1', 'uninstall.ps1', 'install.bat', 'uninstall.bat', 'install.sh', 'uninstall.sh', 'LICENSE']}
+    sources = {name: ROOT / name for name in ['install.ps1', 'uninstall.ps1', 'install.bat', 'uninstall.bat', 'install.sh', 'uninstall.sh', 'install-apt.sh', 'LICENSE']}
     sources.update({'setup-apt.sh': ROOT / 'packaging/setup-apt.sh', 'DISTRIBUTION.md': ROOT / 'docs/DISTRIBUTION.md'})
     timestamp = time.gmtime(max(args.epoch, 315532800))[:6]
     with zipfile.ZipFile(output / 'le-manual-installers.zip', 'w', compression=zipfile.ZIP_DEFLATED) as archive:

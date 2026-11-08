@@ -235,6 +235,32 @@ and downgrades fail before deployment.
 
 ### Client trust bootstrap
 
+For complete installation, download the self-contained
+[`install-apt.sh`](https://github.com/nullvaluefound/le/releases/latest/download/install-apt.sh)
+and run it from its download directory:
+
+```bash
+sudo bash install-apt.sh
+```
+
+The same file is at the repository root. It installs missing `ca-certificates`,
+`curl`, and `gnupg` packages, configures the signed repository, refreshes APT,
+and runs `apt-get install le-cli`. It includes the public-key fingerprint and
+the existing repository trust bootstrap, so no sibling files or fingerprint
+argument are required. It requires an explicitly elevated shell, supports only
+published package architectures, and safely supports repeated execution.
+Trust or APT failures stop installation; prerequisite packages already present
+are not explicitly reinstalled or upgraded. It does not run a system-wide upgrade.
+
+`packaging/generate_manual.py` produces this file from
+`packaging/linux/install-apt.body.sh`, `packaging/setup-apt.sh`, and public
+distribution configuration. It is included in future release assets and manual
+installer bundles. CI checks generated-file drift and tests real first/repeated
+installation in clean Ubuntu and Debian containers.
+
+For repository-only configuration without installing the package, use the
+advanced bootstrap below.
+
 Verify the signing fingerprint through an independent trusted channel first.
 The project's Ed25519 archive key is
 `9ECD6CC083C1EE9EF8EDD26240167FE47E9E1C26`, expiring on 2029-11-06 UTC.
@@ -279,6 +305,10 @@ configured active fingerprint and protected secrets together, dispatch a signed
 refresh, and verify both signatures and a clean client's apt update. Clients
 that have not refreshed their pinned key will correctly reject the new key;
 never work around that by disabling authentication.
+
+Regenerate and publish `install-apt.sh` when changing the active signing
+fingerprint, so new downloads pin the new key. Older copies retain their original
+trust pin and will reject repository metadata signed only by a different key.
 
 ## Release workflow and exact commands
 

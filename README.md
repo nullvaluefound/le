@@ -95,16 +95,16 @@ winget upgrade --id nullvaluefound.Le -e
 winget uninstall --id nullvaluefound.Le -e
 ```
 
-For APT, add the signed project repository once before installing. `apt update`
-refreshes configured repositories; it does not add this repository automatically.
+For APT, download the standalone [install-apt.sh](https://github.com/nullvaluefound/le/releases/latest/download/install-apt.sh)
+and run it with `sudo bash install-apt.sh`. It installs missing prerequisites,
+configures and verifies the signed repository, refreshes APT, and installs `le-cli`.
+The public-key fingerprint is included in the script; no manual key setup is needed.
+
+If curl is already available, download and run it directly from your terminal:
 
 ```bash
-sudo apt update
-sudo apt install ca-certificates curl gnupg
-curl --fail --location --proto '=https' --proto-redir '=https' https://github.com/nullvaluefound/le/releases/download/v1.0.0/setup-apt.sh -o setup-apt.sh
-sudo bash setup-apt.sh --fingerprint 9ECD6CC083C1EE9EF8EDD26240167FE47E9E1C26
-sudo apt update
-sudo apt install le-cli
+curl --fail --location --proto '=https' --proto-redir '=https' https://github.com/nullvaluefound/le/releases/latest/download/install-apt.sh -o install-apt.sh
+sudo bash install-apt.sh
 ```
 
 After setup, update with `sudo apt update && sudo apt install --only-upgrade le-cli`;

@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 CLIENT_TEST = r'''set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
-apt-get update
-apt-get install -y --no-install-recommends ca-certificates curl gnupg
-bash /source/packaging/setup-apt.sh --fingerprint "$LE_EXPECTED_FINGERPRINT"
+bash /source/install-apt.sh
+# Repeated execution preserves the configured repository and installed package.
+bash /source/install-apt.sh
 # A publication can precede the Pages edge cache becoming ready by a few seconds.
 ready=0
 for attempt in $(seq 1 12); do

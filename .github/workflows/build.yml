@@ -45,7 +45,7 @@ jobs:
       - name: Generate and check standalone installers
         run: |
           python packaging/generate_manual.py
-          git diff --exit-code -- install.ps1 uninstall.ps1 install.bat uninstall.bat install.sh uninstall.sh
+          git diff --exit-code -- install.ps1 uninstall.ps1 install.bat uninstall.bat install.sh uninstall.sh install-apt.sh
       - name: Build and smoke-test native binary
         env:
           LE_VERSION: ${{ steps.version.outputs.version }}
@@ -56,7 +56,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends reprepro gnupg dpkg-dev lintian gcc
-          bash -n install.sh uninstall.sh packaging/setup-apt.sh
+          for script in install.sh uninstall.sh install-apt.sh packaging/setup-apt.sh; do bash -n "$script"; done
       - name: Native old-version and failed-upgrade fixtures
         run: python packaging/build_test_fixtures.py
       - name: Isolated install/uninstall tests
