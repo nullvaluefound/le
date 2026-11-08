@@ -85,8 +85,9 @@ executables. It never changes `/usr/bin/ls`.
 WinGet package ID: `nullvaluefound.Le`. Debian package name: `le-cli`.
 The command on both platforms remains `le`.
 
-These commands become available only after the corresponding publication and,
-for WinGet, community approval/indexing:
+WinGet submission [#474502](https://github.com/microsoft/winget-pkgs/pull/474502)
+is awaiting Microsoft validation and review. These Windows commands become
+available after approval and catalog publication:
 
 ```powershell
 winget install --id nullvaluefound.Le -e
@@ -94,19 +95,25 @@ winget upgrade --id nullvaluefound.Le -e
 winget uninstall --id nullvaluefound.Le -e
 ```
 
+For APT, add the signed project repository once before installing. `apt update`
+refreshes configured repositories; it does not add this repository automatically.
+
 ```bash
 sudo apt update
+sudo apt install ca-certificates curl gnupg
+curl --fail --location --proto '=https' --proto-redir '=https' https://github.com/nullvaluefound/le/releases/download/v1.0.0/setup-apt.sh -o setup-apt.sh
+sudo bash setup-apt.sh --fingerprint 9ECD6CC083C1EE9EF8EDD26240167FE47E9E1C26
+sudo apt update
 sudo apt install le-cli
-sudo apt upgrade
-sudo apt remove le-cli
 ```
 
-Configure the signed APT repository first, using its independently verified
-signing fingerprint as described in [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md).
+After setup, update with `sudo apt update && sudo apt install --only-upgrade le-cli`;
+remove the application with `sudo apt remove le-cli`. See
+[repository trust and removal instructions](docs/DISTRIBUTION.md#client-trust-bootstrap).
 The signed repository is live at `https://nullvaluefound.github.io/le`.
 Its signing fingerprint is `9ECD6CC083C1EE9EF8EDD26240167FE47E9E1C26`.
 Production installation and removal are verified on Ubuntu 22.04 and Debian 12.
-WinGet manifests are staged; community submission and indexing remain pending.
+WinGet submission is awaiting Microsoft review and catalog publication.
 
 Debian already has an unrelated `le` text editor. `le-cli` refuses to displace
 that package or an unrelated `/usr/bin/le`. They cannot coexist at that path.

@@ -25,7 +25,7 @@ including HTTPS signature verification, package installation, CLI/JSON output,
 purge, and separate repository removal. A second publication verified restoring
 the prior signed state and refreshing its metadata. Automatic APT publication
 and weekly expiry refresh are enabled with `LE_APT_ENABLED=true`.
-WinGet manifests are validated and staged; no community submission is claimed.
+WinGet manifests are validated and submitted in [PR #474502](https://github.com/microsoft/winget-pkgs/pull/474502). Microsoft validation, review and catalog publication remain pending.
 
 The production secrets are restricted to the `apt-release` environment on
 `main`. Pages deployment is also restricted to `main`; release publication uses
